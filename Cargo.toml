@@ -1,0 +1,9 @@
+[package]
+name = "nus3audio-rs"
+version = "0.1.0"
+authors = ["jam1garner <jam1.mcleod@hotmail.com>"]
+edition = "2018"
+
+[dependencies]
+nom = "4"
+clap = "2"
