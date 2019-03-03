@@ -1,5 +1,5 @@
 mod parser;
-use std::io::prelude::*;
+mod internal;
 
 #[derive(Debug)]
 pub struct Nus3audioFile<'a> {

@@ -1,6 +1,6 @@
+#[macro_use] extern crate itertools;
+#[macro_use] extern crate nom;
 extern crate clap;
-#[macro_use]
-extern crate nom;
 mod nus3audio;
 
 use clap::{Arg, App};
