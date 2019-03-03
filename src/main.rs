@@ -1,5 +1,10 @@
 extern crate clap;
-use clap::{Arg, App, SubCommand};
+#[macro_use]
+extern crate nom;
+mod nus3audio;
+
+use clap::{Arg, App};
+use std::io::prelude::*;
 
 fn main() {
     let matches = 
@@ -42,4 +47,11 @@ fn main() {
                 .help("nus3audio file to open")
                 .required(true))
         .get_matches();
+
+    let file_name = matches.value_of("file").unwrap();
+    let mut data = Vec::new();
+    std::fs::File::open(file_name).expect("Failed to open file")
+        .read_to_end(&mut data).expect("Failed to read data");
+
+    println!("{:?}", nus3audio::Nus3audioFile::from_bytes(&data[..]));
 }
