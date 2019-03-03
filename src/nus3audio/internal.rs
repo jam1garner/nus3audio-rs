@@ -1,15 +1,9 @@
 pub enum Section {
-    Audiindx(Audiindx),
     Nmof(Nmof),
     Adof(Adof),
     Tnnm(Tnnm),
     Junk,
     Pack,
-}
-
-pub struct Audiindx {
-    pub size: u32,
-    pub track_count: u32,
 }
 
 pub struct Nmof {

@@ -1,11 +1,46 @@
 use nom::{le_u32, rest, IResult};
 use super::{AudioFile, Nus3audioFile};
-use super::internal::Section;
+use super::internal::{Section, Nmof, Adof, Tnnm};
 
-fn take_section(buf: &[u8]) -> IResult<&[u8], Section> {
+fn take_section(buf: &[u8], track_count: u32) -> IResult<&[u8], Section> {
     do_parse!(
         buf,
-        (Section::Junk)
+        section: alt!(
+            do_parse!(
+                tag!(b"NMOF") >>
+                length_bytes!(le_u32) >>
+                name_offsets: many0!(le_u32) >>
+                (Section::Nmof(Nmof { name_offsets }))
+            ) | 
+            do_parse!(
+                tag!(b"ADOF") >>
+                length_bytes!(le_u32) >>
+                entries: many0!(do_parse!(
+                    offset: le_u32 >>
+                    size: le_u32 >>
+                    ((offset, size))
+                )) >>
+                (Section::Adof(Adof { entries }))
+
+            ) | 
+            do_parse!(
+                tag!(b"TNNM") >>
+                length_bytes!(le_u32) >>
+                track_nums: many0!(le_u32) >>
+                (Section::Tnnm(Tnnm { track_nums }))
+            ) | 
+            do_parse!(
+                tag!("JUNK") >>
+                length_bytes!(le_u32) >>
+                (Section::Junk)
+            ) |
+            do_parse!(
+                tag!("PACK") >>
+                length_bytes!(le_u32) >>
+                (Section::Pack)
+            )
+        ) >>
+        (section)
     )
 }
 
@@ -48,12 +83,23 @@ fn get_track_ids(sections: &Vec<Section>) -> Option<Vec<u32>> {
     None
 }
 
+fn take_audiindx(buf: &[u8]) -> IResult<&[u8], u32> {
+    do_parse!(
+        buf,
+        tag!(b"AUDIINDX") >>
+        length_bytes!(le_u32) >>
+        track_count: le_u32 >>
+        (track_count)
+    )
+}
+
 pub fn take_file(input: &[u8]) -> IResult<&[u8], Nus3audioFile> {
     do_parse!(
         input,
         tag!(b"NUS3") >>
-        size: le_u32 >>
-        sections: many0!(take_section) >>
+        length_bytes!(le_u32) >>
+        track_count: take_audiindx >>
+        sections: many0!(apply!(take_section, track_count)) >>
         ({
             let adof_entries = get_adof_entries(&sections)
                                 .unwrap();
