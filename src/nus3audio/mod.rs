@@ -2,18 +2,18 @@ mod parser;
 mod internal;
 
 #[derive(Debug)]
-pub struct Nus3audioFile<'a> {
-    pub files: Vec<AudioFile<'a>>
+pub struct Nus3audioFile {
+    pub files: Vec<AudioFile>
 }
 
 #[derive(Debug)]
-pub struct AudioFile<'a> {
+pub struct AudioFile {
     pub id: u32,
     pub name: String,
-    pub data: &'a [u8]
+    pub data: Vec<u8>
 }
 
-impl<'a> Nus3audioFile<'a> {
+impl Nus3audioFile {
     pub fn new() -> Self {
         Nus3audioFile { files: vec![] }
     }
@@ -25,7 +25,7 @@ impl<'a> Nus3audioFile<'a> {
     }
 }
 
-impl<'a> AudioFile<'a> {
+impl AudioFile {
     pub fn filename(&self) -> String {
         self.name.clone() + 
             match &self.data[..4] {

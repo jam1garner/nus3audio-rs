@@ -126,7 +126,7 @@ pub fn take_file(input: &[u8]) -> IResult<&[u8], Nus3audioFile> {
                     izip!(files, names, ids)
                     .map(|(data, name, id)|
                          AudioFile {
-                             data, 
+                             data: Vec::from(data),
                              name: name.to_string(),
                              id: id
                          }

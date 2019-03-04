@@ -10,7 +10,6 @@ use itertools::sorted;
 use nus3audio::Nus3audioFile;
 use std::path::PathBuf;
 use std::fs;
-use std::rc::Rc;
 
 fn extract(nus3: &Nus3audioFile, folder: &str) {
     fs::create_dir_all(folder).expect("Failed to create extract directory");
@@ -18,7 +17,7 @@ fn extract(nus3: &Nus3audioFile, folder: &str) {
         let path: PathBuf = [folder, &file.filename()[..]].iter().collect();
         fs::File::create(path)
             .expect("Failed to open extract file")
-            .write_all(file.data);
+            .write_all(&file.data[..]);
     }
 }
 
@@ -73,7 +72,6 @@ fn main() {
     std::fs::File::open(file_name).expect("Failed to open file")
         .read_to_end(&mut data).expect("Failed to read data");
     let mut nus3_file = nus3audio::Nus3audioFile::from_bytes(&data[..]);
-    let mut files: Vec<Vec<u8>> = vec![];
 
     if let Some(replace_values) = args.values_of("replace") {
         let replace_values = replace_values.collect::<Vec<_>>();
@@ -88,9 +86,7 @@ fn main() {
                 .expect("Failed to open replacement file")
                 .read_to_end(&mut new_file)
                 .expect("Failed to read from replacement file");
-            
-            nus3_file.files[index].data = &new_file[..];
-            files.push(new_file);
+            nus3_file.files[index].data = new_file;
         }
     }
 
