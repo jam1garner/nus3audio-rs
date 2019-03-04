@@ -1,3 +1,4 @@
+#![feature(trace_macros)]
 #[macro_use] extern crate itertools;
 #[macro_use] extern crate nom;
 extern crate clap;
@@ -53,5 +54,9 @@ fn main() {
     std::fs::File::open(file_name).expect("Failed to open file")
         .read_to_end(&mut data).expect("Failed to read data");
 
-    println!("{:?}", nus3audio::Nus3audioFile::from_bytes(&data[..]));
+    let nus3_file = nus3audio::Nus3audioFile::from_bytes(&data[..]);
+
+    for audio_file in nus3_file.files {
+        println!("name: {}, id: {}, filesize: {}", audio_file.name, audio_file.id, audio_file.data.iter().len())
+    }
 }

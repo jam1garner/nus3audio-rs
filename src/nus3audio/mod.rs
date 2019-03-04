@@ -3,14 +3,14 @@ mod internal;
 
 #[derive(Debug)]
 pub struct Nus3audioFile<'a> {
-    files: Vec<AudioFile<'a>>
+    pub files: Vec<AudioFile<'a>>
 }
 
 #[derive(Debug)]
 pub struct AudioFile<'a> {
-    id: u32,
-    name: String,
-    data: &'a [u8]
+    pub id: u32,
+    pub name: String,
+    pub data: &'a [u8]
 }
 
 impl<'a> Nus3audioFile<'a> {
@@ -18,10 +18,10 @@ impl<'a> Nus3audioFile<'a> {
         Nus3audioFile { files: vec![] }
     }
     
-    pub fn from_bytes(data: &[u8]) -> Option<Nus3audioFile> {
-        Some(parser::take_file(
+    pub fn from_bytes(data: &[u8]) -> Nus3audioFile {
+        parser::take_file(
             &data[..]
-        ).expect("Failed to parse file").1)
+        ).expect("Failed to parse file").1
     }
 }
 
