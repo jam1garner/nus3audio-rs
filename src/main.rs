@@ -10,6 +10,7 @@ use itertools::sorted;
 use nus3audio::Nus3audioFile;
 use std::path::PathBuf;
 use std::fs;
+use std::rc::Rc;
 
 fn extract(nus3: &Nus3audioFile, folder: &str) {
     fs::create_dir_all(folder).expect("Failed to create extract directory");
@@ -72,11 +73,33 @@ fn main() {
     std::fs::File::open(file_name).expect("Failed to open file")
         .read_to_end(&mut data).expect("Failed to read data");
     let mut nus3_file = nus3audio::Nus3audioFile::from_bytes(&data[..]);
-    
+    let mut files: Vec<Vec<u8>> = vec![];
+
+    if let Some(replace_values) = args.values_of("replace") {
+        let replace_values = replace_values.collect::<Vec<_>>();
+        let pairs = replace_values
+                .chunks(2)
+                .map(|x| (x[0].parse::<usize>()
+                              .expect("Provided replace index not a number"),
+                          x[1]));
+        for (index, filename) in pairs {
+            let mut new_file = Vec::new();
+            fs::File::open(filename)
+                .expect("Failed to open replacement file")
+                .read_to_end(&mut new_file)
+                .expect("Failed to read from replacement file");
+            
+            nus3_file.files[index].data = &new_file[..];
+            files.push(new_file);
+        }
+    }
+
     if let Some(delete_indices) = args.values_of("delete") {
-        let indices = sorted(
-                        delete_indices.map(|i| i.parse::<usize>().expect("Deleted index not valid u32"))
-                      ).rev();
+        let indices = 
+            sorted(delete_indices.map(|i|
+                    i.parse::<usize>()
+                     .expect("Deleted index not valid u32"))
+                  ).rev();
         for i in indices {
             nus3_file.files.remove(i);
         }
