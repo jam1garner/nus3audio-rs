@@ -25,3 +25,13 @@ impl<'a> Nus3audioFile<'a> {
     }
 }
 
+impl<'a> AudioFile<'a> {
+    pub fn filename(&self) -> String {
+        self.name.clone() + 
+            match &self.data[..4] {
+                b"OPUS" => ".lopus",
+                b"IDSP" => ".idsp",
+                _ => ".bin",
+            }
+    }
+}

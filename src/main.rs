@@ -7,6 +7,19 @@ mod nus3audio;
 use clap::{Arg, App};
 use std::io::prelude::*;
 use itertools::sorted;
+use nus3audio::Nus3audioFile;
+use std::path::PathBuf;
+use std::fs;
+
+fn extract(nus3: &Nus3audioFile, folder: &str) {
+    fs::create_dir_all(folder).expect("Failed to create extract directory");
+    for file in nus3.files.iter() {
+        let path: PathBuf = [folder, &file.filename()[..]].iter().collect();
+        fs::File::create(path)
+            .expect("Failed to open extract file")
+            .write_all(file.data);
+    }
+}
 
 fn main() {
     let args = 
@@ -29,8 +42,8 @@ fn main() {
                 .long("write"))
         .arg(Arg::with_name("extract")
                 .help("Extract nus3audio contents to FOLDER")
-                .short("o")
-                .long("output")
+                .short("e")
+                .long("extract")
                 .value_name("FOLDER")
                 .multiple(true)
                 .takes_value(true))
@@ -67,7 +80,13 @@ fn main() {
         for i in indices {
             nus3_file.files.remove(i);
         }
-    } 
+    }
+
+    if let Some(export_folders) = args.values_of("extract") {
+        for folder in export_folders {
+            extract(&nus3_file, folder);
+        }
+    }
 
     if args.is_present("print") {
         for audio_file in nus3_file.files {
