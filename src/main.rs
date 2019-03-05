@@ -17,7 +17,8 @@ fn extract(nus3: &Nus3audioFile, folder: &str) {
         let path: PathBuf = [folder, &file.filename()[..]].iter().collect();
         fs::File::create(path)
             .expect("Failed to open extract file")
-            .write_all(&file.data[..]);
+            .write_all(&file.data[..])
+            .expect("Failed to write bytes to extract file");
     }
 }
 
@@ -108,8 +109,19 @@ fn main() {
     }
 
     if args.is_present("print") {
-        for audio_file in nus3_file.files {
+        for audio_file in nus3_file.files.iter() {
             println!("name: {}, id: {}, filesize: {}", audio_file.name, audio_file.id, audio_file.data.iter().len())
+        }
+    }
+
+    if let Some(write_files) = args.values_of("write") {
+        let mut file_bytes: Vec<u8> = Vec::with_capacity(nus3_file.calc_size());
+        nus3_file.write(&mut file_bytes);
+        for path in write_files {
+            fs::File::create(path)
+                .expect("Failed to open writing file")
+                .write_all(&file_bytes[..])
+                .expect("Failed to write bytes to file");
         }
     }
 }
