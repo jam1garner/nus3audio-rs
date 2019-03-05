@@ -29,6 +29,10 @@ fn main() {
         .version("1.0")
         .about("Tool for working with nus3audio archive files")
         .author("jam1garner")
+        .arg(Arg::with_name("new")
+                .help("Creates a new nus3audio file instead of reading one it")
+                .short("n")
+                .long("new"))
         .arg(Arg::with_name("replace")
                 .help("Replaces a file at INDEX with NEWFILE")
                 .short("r")
@@ -66,14 +70,21 @@ fn main() {
                 .long("visual"))
         .arg(Arg::with_name("file")
                 .help("nus3audio file to open")
-                .required(true))
+                .required_unless("new")
+                .conflicts_with("new"))
         .get_matches();
 
-    let file_name = args.value_of("file").unwrap();
-    let mut data = Vec::new();
-    std::fs::File::open(file_name).expect("Failed to open file")
-        .read_to_end(&mut data).expect("Failed to read data");
-    let mut nus3_file = nus3audio::Nus3audioFile::from_bytes(&data[..]);
+    let mut nus3_file =
+        if let Some(file_name) = args.value_of("file") {
+            let mut data = Vec::new();
+            std::fs::File::open(file_name).expect("Failed to open file")
+                .read_to_end(&mut data).expect("Failed to read data");
+            nus3audio::Nus3audioFile::from_bytes(&data[..])
+        }
+        else {
+            nus3audio::Nus3audioFile::new()
+        };
+    
 
     if let Some(replace_values) = args.values_of("replace") {
         let replace_values = replace_values.collect::<Vec<_>>();
