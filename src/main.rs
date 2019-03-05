@@ -2,6 +2,7 @@
 #[macro_use] extern crate itertools;
 #[macro_use] extern crate nom;
 extern crate clap;
+mod visual_mode;
 mod nus3audio;
 
 use clap::{Arg, App};
@@ -112,6 +113,10 @@ fn main() {
         for audio_file in nus3_file.files.iter() {
             println!("name: {}, id: {}, filesize: {}", audio_file.name, audio_file.id, audio_file.data.iter().len())
         }
+    }
+
+    if args.is_present("visual") {
+        visual_mode::main(&mut nus3_file);        
     }
 
     if let Some(write_files) = args.values_of("write") {

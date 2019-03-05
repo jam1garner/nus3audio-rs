@@ -27,6 +27,10 @@ impl Nus3audioFile {
 }
 
 impl AudioFile {
+    pub fn from_id(id: u32) -> Self {
+        AudioFile { data: vec![], name: String::new(), id }
+    }
+    
     pub fn filename(&self) -> String {
         self.name.clone() + 
             match &self.data[..4] {
