@@ -26,7 +26,7 @@ fn main() {
     let args = 
         App::new("nus3audio")
         .version("1.0")
-        .about("Tool for working with nus3audio files")
+        .about("Tool for working with nus3audio archive files")
         .author("jam1garner")
         .arg(Arg::with_name("replace")
                 .help("Replaces a file at INDEX with NEWFILE")
