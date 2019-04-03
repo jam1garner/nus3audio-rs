@@ -2,6 +2,7 @@
 #[macro_use] extern crate itertools;
 #[macro_use] extern crate nom;
 extern crate clap;
+extern crate crc;
 mod visual_mode;
 mod nus3audio;
 
@@ -26,7 +27,7 @@ fn extract(nus3: &Nus3audioFile, folder: &str) {
 fn main() {
     let args = 
         App::new("nus3audio")
-        .version("1.0")
+        .version("1.1")
         .about("Tool for working with nus3audio archive files")
         .author("jam1garner")
         .arg(Arg::with_name("new")

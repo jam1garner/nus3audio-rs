@@ -1,6 +1,8 @@
 use super::Nus3audioFile;
 use byteorder::{LittleEndian, WriteBytesExt};
 use std::mem::size_of;
+use std::collections::HashMap;
+use crc::crc32;
 
 fn get_padding_amount(offset: usize) -> usize {
     ((0x18 - (offset as isize % 0x10)) % 0x10) as usize
@@ -76,10 +78,26 @@ impl Nus3audioFile {
                                     + junk_size + "PACK".len() + size_of::<u32>();
 
         let mut pack_section_size = 0u32;
+        let mut existing_files: HashMap<u32, (u32, u32)> = HashMap::new();
+        let mut files_to_pack = vec![];
         for file in self.files.iter() {
-            file_offsets.push((pack_section_start as u32 + pack_section_size,
-                               file.data.len() as u32));
-            pack_section_size += ((file.data.len() + 0xF) / 0x10) as u32 * 0x10;
+            let hash = crc32::checksum_ieee(&file.data);
+            
+            let offset_pair = 
+                match existing_files.get(&hash) {
+                    Some(pair) => *pair,
+                    None => {
+                        let pair = (pack_section_start as u32 + pack_section_size,
+                                 file.data.len() as u32);
+                        existing_files.insert(hash, pair);
+                        files_to_pack.push(&file.data[..]);
+                        pack_section_size += ((file.data.len() + 0xF) / 0x10) as u32 * 0x10;
+                        
+                        pair
+                    }
+                };
+            file_offsets.push(offset_pair);
+            
         }
         
         let filesize = pack_section_start as u32 + pack_section_size;
@@ -115,9 +133,9 @@ impl Nus3audioFile {
         write!(vec![0u8; junk_pad]);
         write!("PACK");
         write!(pack_section_size);
-        for file in self.files.iter() {
-            write!(&file.data[..]);
-            write!(vec![0u8; (0x10 - (file.data.len() % 0x10)) % 0x10 ])
+        for file in files_to_pack.iter() {
+            write!(&file[..]);
+            write!(vec![0u8; (0x10 - (file.len() % 0x10)) % 0x10 ])
         }
     }
 }
