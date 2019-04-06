@@ -97,7 +97,6 @@ impl Nus3audioFile {
                     }
                 };
             file_offsets.push(offset_pair);
-            
         }
         
         let filesize = pack_section_start as u32 + pack_section_size;
@@ -135,7 +134,7 @@ impl Nus3audioFile {
         write!(pack_section_size);
         for file in files_to_pack.iter() {
             write!(&file[..]);
-            write!(vec![0u8; (0x10 - (file.len() % 0x10)) % 0x10 ])
+            write!(vec![0u8; (0x10 - (file.len() % 0x10)) % 0x10 ]);
         }
     }
 }
