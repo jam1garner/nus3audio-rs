@@ -1,10 +1,9 @@
 #![feature(trace_macros)]
-#[macro_use] extern crate itertools;
-#[macro_use] extern crate nom;
+extern crate itertools;
 extern crate clap;
 extern crate crc;
+extern crate nus3audio;
 mod visual_mode;
-mod nus3audio;
 
 use clap::{Arg, App};
 use std::io::prelude::*;
