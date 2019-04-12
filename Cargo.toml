@@ -5,7 +5,7 @@ authors = ["jam1garner <jam1.mcleod@hotmail.com>"]
 edition = "2018"
 
 [dependencies]
-nus3audio = "1.0.1"
+nus3audio = "1.0.2"
 itertools = "0.8"
 clap = "2"
 byteorder = "1.3"
