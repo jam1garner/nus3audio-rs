@@ -76,10 +76,7 @@ fn main() {
 
     let mut nus3_file =
         if let Some(file_name) = args.value_of("file") {
-            let mut data = Vec::new();
-            std::fs::File::open(file_name).expect("Failed to open file")
-                .read_to_end(&mut data).expect("Failed to read data");
-            nus3audio::Nus3audioFile::from_bytes(&data[..])
+            nus3audio::Nus3audioFile::open(file_name).expect("Failed to read file")
         }
         else {
             nus3audio::Nus3audioFile::new()
