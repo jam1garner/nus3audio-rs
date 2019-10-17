@@ -20,6 +20,9 @@ jobs:
     - name: Build Linux
       run:
         cargo build --release --target x86_64-unknown-linux-gnu
+    - name: Prep Windows
+      run:
+        apt install gcc-mingw-w64
     - name: Build Windows
       run:
         cargo build --release --target x86_64-pc-windows-gnu
