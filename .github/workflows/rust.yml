@@ -9,6 +9,8 @@ jobs:
 
     steps:
     - uses: actions/checkout@v1
+    - id: component
+      uses: actions-rs/components-nightly@v1
     - uses: actions-rs/toolchain@v1
       with:
           toolchain: ${{ steps.component.outputs.toolchain }}
