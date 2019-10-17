@@ -3,27 +3,57 @@ name: Rust
 on: [push]
 
 jobs:
-  build:
-
+  Build Linux:
     runs-on: ubuntu-latest
-
     steps:
     - uses: actions/checkout@v1
-    - uses: actions-rs/toolchain@v1
-      with:
-          toolchain: nightly
-          target: x86_64-pc-windows-gnu
-          override: true
-    - name: Add Windows
-      run:
-        rustup target add x86_64-pc-windows-gnu
     - name: Build Linux
       run:
         cargo build --release --target x86_64-unknown-linux-gnu
-    - name: Prep Windows
-      run:
-        apt install gcc-mingw-w64
-    - name: Build Windows
-      run:
-        cargo build --release --target x86_64-pc-windows-gnu
-       
+    - name: Upload Linux Build
+      uses: actions/upload-artifact@v1
+      with:
+        name: linux_build
+        path: target/x86_64-unknown-linux-gnu/release/nus3audio
+  Build Windows:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v1
+      - name: Build Windows
+        run:
+          cargo build --release --target x86_64-pc-windows-gnu
+      - name: Upload Windows Build
+        uses: actions/upload-artifact@v1
+        with:
+          name: windows_build
+          path: target/x86_64-pc-windows-gnu/release/nus3audio.exe
+  Build MacOS:
+    runs-on: macOS-latest
+    steps:
+      - uses: actions/checkout@v1
+      - name: Build MacOS
+        run:
+         cargo build --release --target x86_64-apple-darwin
+      - name: Upload MacOS Build
+        uses: actions/upload-artifact@v1
+        with:
+          name: macOS_build
+          path: target/x86_64-apple-darwin/release/nus3audio
+  Upload Release:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download Linux Build
+        uses: actions/download-artifact@v1
+        with:
+          name: linux_build
+      - name: Download Windows Build
+        uses: actions/download-artifact@v1
+        with:
+          name: windows_build
+      - name: Download MacOS Build
+        uses: actions/download-artifact@v1
+        with:
+          name: macOS_build
+      - name: List Files
+        run:
+          ls -R *
