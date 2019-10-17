@@ -14,9 +14,18 @@ jobs:
           toolchain: nightly
           target: x86_64-pc-windows-gnu
           override: true
-    - name: Build
+    - name: Add Windows
       run:
         rustup target add x86_64-pc-windows-gnu
+    - name: Add Linux
+      run:
+        rustup target add x86_64-unknown-linux-gnu
+    - name: Build Linux
+      run:
         cargo build --release --target x86_64-unknown-linux-gnu
+    - name: Build Windows
+      run:
         cargo build --release --target x86_64-pc-windows-gnu
+    - name: Build macOS
+      run:
         cargo build --release --target x86_64-apple-darwin
