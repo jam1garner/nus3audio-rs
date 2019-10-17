@@ -39,7 +39,7 @@ jobs:
         with:
           name: macOS_build
           path: target/x86_64-apple-darwin/release/nus3audio
-  Upload Release:
+  upload_release:
     runs-on: ubuntu-latest
     steps:
       - name: Download Linux Build
