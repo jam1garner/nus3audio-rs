@@ -60,17 +60,43 @@ jobs:
         uses: actions/download-artifact@v1
         with:
           name: macOS_build
-      - name: Rename macOS_build
-        run: mv macOS_build/nus3audio macOS_build/nus3audio_mac 
-      - name: Release
-        uses: softprops/action-gh-release@v1
-        with:
-          name: Latest Commit
-          prerelease: true
-          files: 
-            windows_build/nus3audio.exe
-            linux_build/nus3audio
-            macOS_build/nus3audio_mac
+      - name: Create Release
+        id: create_release
+        uses: actions/create-release@v1.0.0
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          GITHUB_REF: refs/tags/v.beta  
+        with:
+          tag_name: latest_commit
+          release_name: Current Commit
+          draft: false
+          prerelease: true
+      - name: Upload Windows
+        id: upload-windows-release-asset 
+        uses: actions/upload-release-asset@v1.0.1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }} # This pulls from the CREATE RELEASE step above, referencing it's ID to get its outputs object, which include a `upload_url`. See this blog post for more info: https://jasonet.co/posts/new-features-of-github-actions/#passing-data-to-future-steps 
+          asset_path: ./windows_build/nus3audio.exe
+          asset_name: nus3audio.exe
+          asset_content_type: application/octet-stream
+      - name: Upload Linux
+        id: upload-linux-release-asset 
+        uses: actions/upload-release-asset@v1.0.1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }} # This pulls from the CREATE RELEASE step above, referencing it's ID to get its outputs object, which include a `upload_url`. See this blog post for more info: https://jasonet.co/posts/new-features-of-github-actions/#passing-data-to-future-steps 
+          asset_path: ./linux_build/nus3audio
+          asset_name: nus3audio
+          asset_content_type: application/octet-stream
+      - name: Upload Linux
+        id: upload-macos-release-asset 
+        uses: actions/upload-release-asset@v1.0.1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }} # This pulls from the CREATE RELEASE step above, referencing it's ID to get its outputs object, which include a `upload_url`. See this blog post for more info: https://jasonet.co/posts/new-features-of-github-actions/#passing-data-to-future-steps 
+          asset_path: ./macOS_build/nus3audio
+          asset_name: nus3audio_mac
+          asset_content_type: application/octet-stream
