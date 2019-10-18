@@ -1,4 +1,3 @@
-#![feature(trace_macros)]
 extern crate itertools;
 extern crate clap;
 extern crate crc;
