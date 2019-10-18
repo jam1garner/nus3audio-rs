@@ -31,7 +31,7 @@ jobs:
     runs-on: macOS-latest
     steps:
       - uses: actions/checkout@v1
-      - name: Install nightly
+      - name: Install stable macOS toolchain
         uses: actions-rs/toolchain@v1
         with:
             toolchain: stable
