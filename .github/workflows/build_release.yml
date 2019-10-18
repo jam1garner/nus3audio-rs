@@ -60,6 +60,17 @@ jobs:
         uses: actions/download-artifact@v1
         with:
           name: macOS_build
-      - name: List Files
-        run:
-          ls -R *
+      - name: Rename macOS_build
+        run: mv macOS_build/nus3audio macOS_build/nus3audio_mac 
+      - name: Release
+        uses: softprops/action-gh-release@v1
+        if: startsWith(github.ref, 'refs/tags/')
+        with:
+          name: Latest Commit
+          prerelease: true
+          files: 
+            windows_build/nus3audio.exe
+            linux_build/nus3audio
+            macOS_build/nus3audio_mac
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
