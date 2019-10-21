@@ -67,7 +67,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           tag_name: latest_commit
-          release_name: Current Commit
+          release_name: Current Commit ($GITHUB_SHA)
           draft: false
           prerelease: true
       - name: Upload Windows
