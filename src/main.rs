@@ -28,8 +28,9 @@ fn main() {
         .version("1.1")
         .about("Tool for working with nus3audio archive files")
         .author("jam1garner")
+        .author("BenHall-7")
         .arg(Arg::with_name("new")
-                .help("Creates a new nus3audio file instead of reading one it")
+                .help("Creates a new nus3audio file instead of reading one in")
                 .short("n")
                 .long("new"))
         .arg(Arg::with_name("replace")
@@ -77,6 +78,11 @@ fn main() {
                 .help("nus3audio file to open")
                 .required_unless("new")
                 .conflicts_with("new"))
+        .arg(Arg::with_name("tonelabel")
+                .help("Generates a corresponding .tonelabel file")
+                .short("t")
+                .long("tonelabel")
+                .requires("file"))
         .get_matches();
 
     let mut nus3_file =
@@ -145,6 +151,17 @@ fn main() {
 
     if args.is_present("visual") {
         visual_mode::main(&mut nus3_file);        
+    }
+
+    if args.is_present("tonelabel") {
+        let mut file_bytes: Vec<u8> = Vec::with_capacity(nus3_file.calc_tonelabel_size());
+        nus3_file.write_tonelabel(&mut file_bytes);
+        let mut name = PathBuf::from(args.value_of("file").unwrap());
+        name.set_extension("tonelabel");
+        fs::File::create(name)
+            .expect("Failed to open tonelabel writing file")
+            .write_all(&file_bytes[..])
+            .expect("Failed to write bytes to tonelabel file")
     }
 
     if let Some(write_files) = args.values_of("write") {
