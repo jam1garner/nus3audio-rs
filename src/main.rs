@@ -52,6 +52,12 @@ fn main() {
                 .value_name("FOLDER")
                 .multiple(true)
                 .takes_value(true))
+        .arg(Arg::with_name("rebuild")
+                .help("Extract nus3audio contents to FOLDER")
+                .short("R")
+                .long("rebuild")
+                .value_name("FOLDER")
+                .takes_value(true))
         .arg(Arg::with_name("delete")
                 .help("Delete file at INDEX in nus3audio file")
                 .short("d")
@@ -80,7 +86,22 @@ fn main() {
         else {
             nus3audio::Nus3audioFile::new()
         };
-    
+
+    if let Some(rebuild_folder) = args.value_of("rebuild") {
+        for file in std::fs::read_dir(rebuild_folder).expect("failed to open rebuild folder") {
+            let file = file.unwrap();
+            let path = file.path();
+            if path.is_dir() {
+                continue
+            }
+            let filename = path.file_stem().unwrap().to_str().unwrap();
+            if let Some(file) = nus3_file.files.iter_mut().find(|file| file.name == filename) {
+                file.data = fs::read(path).expect("failed to read file");
+            } else {
+                println!("File '{}' not found in nus3audio file", filename);
+            }
+        }
+    }
 
     if let Some(replace_values) = args.values_of("replace") {
         let replace_values = replace_values.collect::<Vec<_>>();
