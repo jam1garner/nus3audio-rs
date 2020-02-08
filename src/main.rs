@@ -9,9 +9,10 @@ use std::io::prelude::*;
 use itertools::sorted;
 use nus3audio::Nus3audioFile;
 use std::path::PathBuf;
+use std::path::Path;
 use std::fs;
 
-fn extract(nus3: &Nus3audioFile, folder: &str) {
+fn extract_name(nus3: &Nus3audioFile, folder: &str) {
     fs::create_dir_all(folder).expect("Failed to create extract directory");
     for file in nus3.files.iter() {
         let path: PathBuf = [folder, &file.filename()[..]].iter().collect();
@@ -19,6 +20,36 @@ fn extract(nus3: &Nus3audioFile, folder: &str) {
             .expect("Failed to open extract file")
             .write_all(&file.data[..])
             .expect("Failed to write bytes to extract file");
+        println!("{}", file.filename());
+    }
+
+}
+
+fn extract_id(nus3: &Nus3audioFile, folder: &str) {
+    fs::create_dir_all(folder).expect("Failed to create extract directory");
+    for file in nus3.files.iter() {
+
+        let content_type = match Path::new(&file.filename()).extension() {
+            None => "",
+            Some(os_str) => {
+                match os_str.to_str() {
+                    Some("lopus") => ".lopus",
+                    Some("idsp") => ".idsp",
+                    _ => panic!("Invalid"),
+                }
+            }
+        };
+
+        let file_export = format!("{}{}", &file.id.to_string(), content_type);
+        
+        let path: PathBuf = [folder, &file_export].iter().collect();
+        
+        fs::File::create(path)
+            .expect("Failed to open extract file")
+            .write_all(&file.data[..])
+            .expect("Failed to write bytes to extract file");
+
+        println!("{}", file_export);
     }
 }
 
@@ -46,17 +77,30 @@ fn main() {
                 .takes_value(true)
                 .multiple(true)
                 .long("write"))
-        .arg(Arg::with_name("extract")
-                .help("Extract nus3audio contents to FOLDER")
+        .arg(Arg::with_name("extract_name")
+                .help("Extract nus3audio contents with their filenames to FOLDER")
                 .short("e")
-                .long("extract")
+                .long("extract_name")
                 .value_name("FOLDER")
                 .multiple(true)
                 .takes_value(true))
-        .arg(Arg::with_name("rebuild")
-                .help("Extract nus3audio contents to FOLDER")
+        .arg(Arg::with_name("extract_id")
+                .help("Extract nus3audio contents with their ids to FOLDER")
+                .short("i")
+                .long("extract_id")
+                .value_name("FOLDER")
+                .multiple(true)
+                .takes_value(true))
+        .arg(Arg::with_name("rebuild_name")
+                .help("Rebuild nus3audio contents with filenames from a FOLDER")
                 .short("R")
-                .long("rebuild")
+                .long("rebuild_name")
+                .value_name("FOLDER")
+                .takes_value(true))
+        .arg(Arg::with_name("rebuild_id")
+                .help("Rebuild nus3audio contents with ids from a FOLDER")
+                .short("a")
+                .long("rebuild_id")
                 .value_name("FOLDER")
                 .takes_value(true))
         .arg(Arg::with_name("delete")
@@ -93,7 +137,7 @@ fn main() {
             nus3audio::Nus3audioFile::new()
         };
 
-    if let Some(rebuild_folder) = args.value_of("rebuild") {
+    if let Some(rebuild_folder) = args.value_of("rebuild_name") {
         for file in std::fs::read_dir(rebuild_folder).expect("failed to open rebuild folder") {
             let file = file.unwrap();
             let path = file.path();
@@ -102,6 +146,23 @@ fn main() {
             }
             let filename = path.file_stem().unwrap().to_str().unwrap();
             if let Some(file) = nus3_file.files.iter_mut().find(|file| file.name == filename) {
+                file.data = fs::read(path).expect("failed to read file");
+            } else {
+                println!("File '{}' not found in nus3audio file", filename);
+            }
+        }
+    }
+
+
+    if let Some(rebuild_folder) = args.value_of("rebuild_id") {
+        for file in std::fs::read_dir(rebuild_folder).expect("failed to open rebuild folder") {
+            let file = file.unwrap();
+            let path = file.path();
+            if path.is_dir() {
+                continue
+            }
+            let filename = path.file_stem().unwrap().to_str().unwrap();
+            if let Some(file) = nus3_file.files.iter_mut().find(|file| file.id.to_string() == filename) {
                 file.data = fs::read(path).expect("failed to read file");
             } else {
                 println!("File '{}' not found in nus3audio file", filename);
@@ -137,9 +198,15 @@ fn main() {
         }
     }
 
-    if let Some(export_folders) = args.values_of("extract") {
+    if let Some(export_folders) = args.values_of("extract_name") {
         for folder in export_folders {
-            extract(&nus3_file, folder);
+            extract_name(&nus3_file, folder);
+        }
+    }
+
+    if let Some(export_folders) = args.values_of("extract_id") {
+        for folder in export_folders {
+            extract_id(&nus3_file, folder);
         }
     }
 
