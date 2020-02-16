@@ -218,6 +218,10 @@ fn main() {
         }
     }
 
+    if args.json {
+        println!("{}", serde_json::to_string_pretty(&nus3_file).unwrap());
+    }
+
     if args.visual {
         visual_mode::main(&mut nus3_file);        
     }
