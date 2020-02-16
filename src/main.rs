@@ -107,12 +107,13 @@ const REPLACE_ERROR: &str = "Replace Usage: nus3audio --replace [INDEX] [NEW FIL
 const APPEND_ERROR: &str = "Append Usage: nus3audio --append [NAME] [NEW FILE]";
 
 fn get_replace_append(args: &Args) -> Result<(IndexFilePairs, NameFilePairs), ParseIntError> {
+    dbg!(&args.append);
     let replace_len = args.replace.len();
     let append_len = args.append.len();
     if replace_len % 2 != 0 {
         eprintln!("{}", REPLACE_ERROR);
         show_help()
-    } else if append_len & 2 != 0 {
+    } else if append_len % 2 != 0 {
         eprintln!("{}", APPEND_ERROR);
         show_help()
     }
@@ -127,7 +128,7 @@ fn get_replace_append(args: &Args) -> Result<(IndexFilePairs, NameFilePairs), Pa
                 }
             })
             .collect::<Result<_, _>>()?,
-        args.replace
+        args.append
             .chunks_exact(2)
             .map(|chunk|{
                 if let &[ref name, ref file] = chunk {
