@@ -1,4 +1,6 @@
 # nus3audio-rs
+![Rust](https://github.com/jam1garner/nus3audio-rs/workflows/Rust/badge.svg)
+
 Command line tool for working with nus3audio archive files (re)written in rust. Supports all tier 1 rust platforms (Windows, MacOS, Linux).
 
 ```
