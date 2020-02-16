@@ -107,7 +107,6 @@ const REPLACE_ERROR: &str = "Replace Usage: nus3audio --replace [INDEX] [NEW FIL
 const APPEND_ERROR: &str = "Append Usage: nus3audio --append [NAME] [NEW FILE]";
 
 fn get_replace_append(args: &Args) -> Result<(IndexFilePairs, NameFilePairs), ParseIntError> {
-    dbg!(&args.append);
     let replace_len = args.replace.len();
     let append_len = args.append.len();
     if replace_len % 2 != 0 {
