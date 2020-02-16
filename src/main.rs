@@ -4,28 +4,27 @@ extern crate crc;
 extern crate nus3audio;
 mod visual_mode;
 
-use clap::{Arg, App};
+use clap::Clap;
 use std::io::prelude::*;
-use itertools::sorted;
-use nus3audio::Nus3audioFile;
+use nus3audio::{Nus3audioFile, AudioFile};
 use std::path::PathBuf;
 use std::path::Path;
 use std::fs;
+use std::num::ParseIntError;
 
-fn extract_name(nus3: &Nus3audioFile, folder: &str) {
-    fs::create_dir_all(folder).expect("Failed to create extract directory");
+fn extract_name<P: AsRef<Path>>(nus3: &Nus3audioFile, folder: P) {
+    fs::create_dir_all(folder.as_ref()).expect("Failed to create extract directory");
     for file in nus3.files.iter() {
+        let folder = folder.as_ref().to_str().unwrap();
         let path: PathBuf = [folder, &file.filename()[..]].iter().collect();
-        fs::File::create(path)
-            .expect("Failed to open extract file")
-            .write_all(&file.data[..])
-            .expect("Failed to write bytes to extract file");
+        fs::write(path, &file.data).expect("Failed to write bytes to extract file");
         println!("{}", file.filename());
     }
 
 }
 
-fn extract_id(nus3: &Nus3audioFile, folder: &str) {
+fn extract_id<P: AsRef<Path>>(nus3: &Nus3audioFile, folder: P) {
+    let folder = folder.as_ref();
     fs::create_dir_all(folder).expect("Failed to create extract directory");
     for file in nus3.files.iter() {
 
@@ -42,102 +41,121 @@ fn extract_id(nus3: &Nus3audioFile, folder: &str) {
 
         let file_export = format!("{}{}", &file.id.to_string(), content_type);
         
-        let path: PathBuf = [folder, &file_export].iter().collect();
+        let path: PathBuf = [folder, file_export.as_ref()].iter().collect();
         
-        fs::File::create(path)
-            .expect("Failed to open extract file")
-            .write_all(&file.data[..])
-            .expect("Failed to write bytes to extract file");
+        fs::write(path, &file.data).expect("Failed to write bytes to extract file");
 
         println!("{}", file_export);
     }
 }
 
+#[derive(Clap)]
+#[clap(version, author="jam1garner", author="BenHall-7")]
+struct Args {
+    #[clap(long, short="n", help="Creates a new nus3audio file instead of reading one in")]
+    new: bool,
+
+    #[clap(long, short="r", value_names=&["INDEX", "NEWFILE"])]
+    replace: Vec<String>,
+
+    #[clap(long, short="A", value_names=&["NAME", "NEWFILE"])]
+    append: Vec<String>,
+
+    #[clap(long, short="w", help="Write to FILE after performing all other operations")]
+    write: Vec<PathBuf>,
+
+    #[clap(long, short="e", help="Extract nus3audio contents with their filenames to FOLDER")]
+    extract_name: Vec<PathBuf>,
+
+    #[clap(long, short="i", help="Extract nus3audio contents with their ids to FOLDER", value_name="FOLDER")]
+    extract_id: Vec<PathBuf>,
+
+    #[clap(long, short="R", help="Rebuild nus3audio contents with filenames from a FOLDER", value_name="FOLDER")]
+    rebuild_name: Option<PathBuf>,
+
+    #[clap(long, help="Rebuild nus3audio contents with ids from a FOLDER", value_name="FOLDER")]
+    rebuild_id: Option<PathBuf>,
+
+    #[clap(long, short, help="Delete file at INDEX in nus3audio file", value_name="INDEX")]
+    delete: Vec<usize>,
+
+    #[clap(long, short, help="Prints the contents of the nus3audio file")]
+    print: bool,
+
+    #[clap(long, short, help="Prints the contents of the nus3audio file as json", conflicts_with="print")]
+    json: bool,
+
+    #[clap(long, short, help="Edit in visual mode", conflicts_with="print", conflicts_with="json")]
+    visual: bool,
+
+    #[clap(help="nus3audio file to open", conflicts_with="new", required_unless="new")]
+    file: Option<PathBuf>,
+
+    #[clap(long, short, help="Generates a corresponding .tonelabel file", requires="file")]
+    tonelabel: bool,
+}
+
+fn show_help() -> ! {
+    Args::parse_from(vec!["-h"]);
+    unreachable!()
+}
+
+type IndexFilePairs = Vec<(usize, PathBuf)>;
+type NameFilePairs = Vec<(String, PathBuf)>;
+
+const REPLACE_ERROR: &str = "Replace Usage: nus3audio --replace [INDEX] [NEW FILE]";
+const APPEND_ERROR: &str = "Append Usage: nus3audio --append [NAME] [NEW FILE]";
+
+fn get_replace_append(args: &Args) -> Result<(IndexFilePairs, NameFilePairs), ParseIntError> {
+    let replace_len = args.replace.len();
+    let append_len = args.append.len();
+    if replace_len % 2 != 0 {
+        eprintln!("{}", REPLACE_ERROR);
+        show_help()
+    } else if append_len & 2 != 0 {
+        eprintln!("{}", APPEND_ERROR);
+        show_help()
+    }
+    Ok((
+        args.replace
+            .chunks_exact(2)
+            .map(|chunk|{
+                if let &[ref index, ref file] = chunk {
+                    Ok((index.parse()?, file.into()))
+                } else {
+                    unsafe { std::hint::unreachable_unchecked() }
+                }
+            })
+            .collect::<Result<_, _>>()?,
+        args.replace
+            .chunks_exact(2)
+            .map(|chunk|{
+                if let &[ref name, ref file] = chunk {
+                    Ok((name.clone(), file.into()))
+                } else {
+                    unsafe { std::hint::unreachable_unchecked() }
+                }
+            })
+            .collect::<Result<_, _>>()?,
+    ))
+}
+
 fn main() {
-    let args = 
-        App::new("nus3audio")
-        .version("1.1")
-        .about("Tool for working with nus3audio archive files")
-        .author("jam1garner")
-        .author("BenHall-7")
-        .arg(Arg::with_name("new")
-                .help("Creates a new nus3audio file instead of reading one in")
-                .short("n")
-                .long("new"))
-        .arg(Arg::with_name("replace")
-                .help("Replaces a file at INDEX with NEWFILE")
-                .short("r")
-                .long("replace")
-                .multiple(true)
-                .value_names(&["INDEX", "NEWFILE"]))
-        .arg(Arg::with_name("write")
-                .help("Write to FILE after performing all other operations")
-                .short("w")
-                .value_name("FILE")
-                .takes_value(true)
-                .multiple(true)
-                .long("write"))
-        .arg(Arg::with_name("extract_name")
-                .help("Extract nus3audio contents with their filenames to FOLDER")
-                .short("e")
-                .long("extract_name")
-                .value_name("FOLDER")
-                .multiple(true)
-                .takes_value(true))
-        .arg(Arg::with_name("extract_id")
-                .help("Extract nus3audio contents with their ids to FOLDER")
-                .short("i")
-                .long("extract_id")
-                .value_name("FOLDER")
-                .multiple(true)
-                .takes_value(true))
-        .arg(Arg::with_name("rebuild_name")
-                .help("Rebuild nus3audio contents with filenames from a FOLDER")
-                .short("R")
-                .long("rebuild_name")
-                .value_name("FOLDER")
-                .takes_value(true))
-        .arg(Arg::with_name("rebuild_id")
-                .help("Rebuild nus3audio contents with ids from a FOLDER")
-                .short("a")
-                .long("rebuild_id")
-                .value_name("FOLDER")
-                .takes_value(true))
-        .arg(Arg::with_name("delete")
-                .help("Delete file at INDEX in nus3audio file")
-                .short("d")
-                .long("delete")
-                .value_name("INDEX")
-                .multiple(true)
-                .takes_value(true))
-        .arg(Arg::with_name("print")
-                .help("Prints the contents of the nus3audio file")
-                .short("p")
-                .long("print"))
-        .arg(Arg::with_name("visual")
-                .help("Edit in visual mode")
-                .short("v")
-                .long("visual"))
-        .arg(Arg::with_name("file")
-                .help("nus3audio file to open")
-                .required_unless("new")
-                .conflicts_with("new"))
-        .arg(Arg::with_name("tonelabel")
-                .help("Generates a corresponding .tonelabel file")
-                .short("t")
-                .long("tonelabel")
-                .requires("file"))
-        .get_matches();
+    let args = Args::parse();
+    let (replace, append) = get_replace_append(&args)
+        .unwrap_or_else(|e| {
+            show_help();
+        });
 
     let mut nus3_file =
-        if let Some(file_name) = args.value_of("file") {
+        if let &Some(ref file_name) = &args.file {
             nus3audio::Nus3audioFile::open(file_name).expect("Failed to read file")
         }
         else {
             nus3audio::Nus3audioFile::new()
         };
 
-    if let Some(rebuild_folder) = args.value_of("rebuild_name") {
+    if let Some(rebuild_folder) = args.rebuild_name {
         for file in std::fs::read_dir(rebuild_folder).expect("failed to open rebuild folder") {
             let file = file.unwrap();
             let path = file.path();
@@ -154,7 +172,7 @@ fn main() {
     }
 
 
-    if let Some(rebuild_folder) = args.value_of("rebuild_id") {
+    if let Some(rebuild_folder) = args.rebuild_id {
         for file in std::fs::read_dir(rebuild_folder).expect("failed to open rebuild folder") {
             let file = file.unwrap();
             let path = file.path();
@@ -170,60 +188,44 @@ fn main() {
         }
     }
 
-    if let Some(replace_values) = args.values_of("replace") {
-        let replace_values = replace_values.collect::<Vec<_>>();
-        let pairs = replace_values
-                .chunks(2)
-                .map(|x| (x[0].parse::<usize>()
-                              .expect("Provided replace index not a number"),
-                          x[1]));
-        for (index, filename) in pairs {
-            let mut new_file = Vec::new();
-            fs::File::open(filename)
-                .expect("Failed to open replacement file")
-                .read_to_end(&mut new_file)
-                .expect("Failed to read from replacement file");
-            nus3_file.files[index].data = new_file;
-        }
+    for (index, filename) in replace {
+        nus3_file.files[index].data = fs::read(filename).expect("Failed to open replacement file");
+    }
+    
+    for i in args.delete {
+        nus3_file.files.remove(i);
     }
 
-    if let Some(delete_indices) = args.values_of("delete") {
-        let indices = 
-            sorted(delete_indices.map(|i|
-                    i.parse::<usize>()
-                     .expect("Deleted index not valid u32"))
-                  ).rev();
-        for i in indices {
-            nus3_file.files.remove(i);
-        }
+    for (name, path) in append {
+        nus3_file.files.push(AudioFile {
+            id: nus3_file.files.len() as u32,
+            name,
+            data: fs::read(path).expect("Failed to read append data")
+        });
+    }
+    
+    for folder in args.extract_name {
+        extract_name(&nus3_file, folder);
     }
 
-    if let Some(export_folders) = args.values_of("extract_name") {
-        for folder in export_folders {
-            extract_name(&nus3_file, folder);
-        }
+    for folder in args.extract_id {
+        extract_id(&nus3_file, folder);
     }
 
-    if let Some(export_folders) = args.values_of("extract_id") {
-        for folder in export_folders {
-            extract_id(&nus3_file, folder);
-        }
-    }
-
-    if args.is_present("print") {
+    if args.print {
         for audio_file in nus3_file.files.iter() {
             println!("name: {}, id: {}, filesize: {}", audio_file.name, audio_file.id, audio_file.data.iter().len())
         }
     }
 
-    if args.is_present("visual") {
+    if args.visual {
         visual_mode::main(&mut nus3_file);        
     }
 
-    if args.is_present("tonelabel") {
+    if args.tonelabel {
         let mut file_bytes: Vec<u8> = Vec::with_capacity(nus3_file.calc_tonelabel_size());
         nus3_file.write_tonelabel(&mut file_bytes);
-        let mut name = PathBuf::from(args.value_of("file").unwrap());
+        let mut name = args.file.unwrap().clone();
         name.set_extension("tonelabel");
         fs::File::create(name)
             .expect("Failed to open tonelabel writing file")
@@ -231,14 +233,11 @@ fn main() {
             .expect("Failed to write bytes to tonelabel file")
     }
 
-    if let Some(write_files) = args.values_of("write") {
+    if !args.write.is_empty() {
         let mut file_bytes: Vec<u8> = Vec::with_capacity(nus3_file.calc_size());
         nus3_file.write(&mut file_bytes);
-        for path in write_files {
-            fs::File::create(path)
-                .expect("Failed to open writing file")
-                .write_all(&file_bytes[..])
-                .expect("Failed to write bytes to file");
+        for path in args.write {
+            fs::write(path, &file_bytes).expect("Failed to write bytes to file");
         }
     }
 }
