@@ -52,46 +52,46 @@ fn extract_id<P: AsRef<Path>>(nus3: &Nus3audioFile, folder: P) {
 #[derive(Clap)]
 #[clap(version, author="jam1garner", author="BenHall-7")]
 struct Args {
-    #[clap(long, short="n", help="Creates a new nus3audio file instead of reading one in")]
-    new: bool,
+    #[clap(long="new", short='n', about="Creates a new nus3audio file instead of reading one in")]
+    _new: bool,
 
-    #[clap(long, short="r", value_names=&["INDEX", "NEWFILE"])]
+    #[clap(long, short='r', value_names=&["INDEX", "NEWFILE"])]
     replace: Vec<String>,
 
-    #[clap(long, short="A", value_names=&["NAME", "NEWFILE"])]
+    #[clap(long, short='A', value_names=&["NAME", "NEWFILE"])]
     append: Vec<String>,
 
-    #[clap(long, short="w", help="Write to FILE after performing all other operations")]
+    #[clap(long, short='w', about="Write to FILE after performing all other operations")]
     write: Vec<PathBuf>,
 
-    #[clap(long, short="e", help="Extract nus3audio contents with their filenames to FOLDER")]
+    #[clap(long, short='e', about="Extract nus3audio contents with their filenames to FOLDER")]
     extract_name: Vec<PathBuf>,
 
-    #[clap(long, short="i", help="Extract nus3audio contents with their ids to FOLDER", value_name="FOLDER")]
+    #[clap(long, short='i', about="Extract nus3audio contents with their ids to FOLDER", value_name="FOLDER")]
     extract_id: Vec<PathBuf>,
 
-    #[clap(long, short="R", help="Rebuild nus3audio contents with filenames from a FOLDER", value_name="FOLDER")]
+    #[clap(long, short='R', about="Rebuild nus3audio contents with filenames from a FOLDER", value_name="FOLDER")]
     rebuild_name: Option<PathBuf>,
 
-    #[clap(long, help="Rebuild nus3audio contents with ids from a FOLDER", value_name="FOLDER")]
+    #[clap(long, about="Rebuild nus3audio contents with ids from a FOLDER", value_name="FOLDER")]
     rebuild_id: Option<PathBuf>,
 
-    #[clap(long, short, help="Delete file at INDEX in nus3audio file", value_name="INDEX")]
+    #[clap(long, short, about="Delete file at INDEX in nus3audio file", value_name="INDEX")]
     delete: Vec<usize>,
 
-    #[clap(long, short, help="Prints the contents of the nus3audio file")]
+    #[clap(long, short, about="Prints the contents of the nus3audio file")]
     print: bool,
 
-    #[clap(long, short, help="Prints the contents of the nus3audio file as json", conflicts_with="print")]
+    #[clap(long, short, about="Prints the contents of the nus3audio file as json", conflicts_with="print")]
     json: bool,
 
-    #[clap(long, short, help="Edit in visual mode", conflicts_with="print", conflicts_with="json")]
+    #[clap(long, short, about="Edit in visual mode", conflicts_with="print", conflicts_with="json")]
     visual: bool,
 
-    #[clap(help="nus3audio file to open", conflicts_with="new", required_unless="new")]
+    #[clap(about="nus3audio file to open", conflicts_with="new", required_unless="new")]
     file: Option<PathBuf>,
 
-    #[clap(long, short, help="Generates a corresponding .tonelabel file", requires="file")]
+    #[clap(long, short, about="Generates a corresponding .tonelabel file", requires="file")]
     tonelabel: bool,
 }
 
@@ -143,7 +143,7 @@ fn get_replace_append(args: &Args) -> Result<(IndexFilePairs, NameFilePairs), Pa
 fn main() {
     let args = Args::parse();
     let (replace, append) = get_replace_append(&args)
-        .unwrap_or_else(|e| {
+        .unwrap_or_else(|_| {
             show_help();
         });
 
