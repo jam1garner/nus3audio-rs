@@ -34,7 +34,7 @@ fn extract_id<P: AsRef<Path>>(nus3: &Nus3audioFile, folder: P) {
                 match os_str.to_str() {
                     Some("lopus") => ".lopus",
                     Some("idsp") => ".idsp",
-                    _ => panic!("Invalid"),
+                    _ => "",
                 }
             }
         };
@@ -173,7 +173,7 @@ fn main() {
 
 
     if let Some(rebuild_folder) = args.rebuild_id {
-        for file in std::fs::read_dir(rebuild_folder).expect("failed to open rebuild folder") {
+        for file in std::fs::read_dir(rebuild_folder).expect("Failed to open rebuild folder") {
             let file = file.unwrap();
             let path = file.path();
             if path.is_dir() {
@@ -181,7 +181,7 @@ fn main() {
             }
             let filename = path.file_stem().unwrap().to_str().unwrap();
             if let Some(file) = nus3_file.files.iter_mut().find(|file| file.id.to_string() == filename) {
-                file.data = fs::read(path).expect("failed to read file");
+                file.data = fs::read(path).expect("Failed to read file");
             } else {
                 println!("File '{}' not found in nus3audio file", filename);
             }
